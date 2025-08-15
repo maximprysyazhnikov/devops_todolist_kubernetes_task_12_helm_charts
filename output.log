@@ -1,0 +1,47 @@
+﻿NAMESPACE            NAME                                                     READY   STATUS    RESTARTS      AGE   IP           NODE                         NOMINATED NODE   READINESS GATES
+default              pod/todo-app-668bf8d554-qgh2z                            1/1     Running   0             12h   10.244.0.5   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/coredns-7db6d8ff4d-rhq5f                             1/1     Running   0             12h   10.244.0.3   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/coredns-7db6d8ff4d-sgbt6                             1/1     Running   0             12h   10.244.0.2   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/etcd-todo-cluster-control-plane                      1/1     Running   0             12h   172.18.0.2   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/kindnet-xmk2d                                        1/1     Running   0             12h   172.18.0.2   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/kube-apiserver-todo-cluster-control-plane            1/1     Running   0             12h   172.18.0.2   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/kube-controller-manager-todo-cluster-control-plane   1/1     Running   1 (12h ago)   12h   172.18.0.2   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/kube-proxy-dqwz4                                     1/1     Running   0             12h   172.18.0.2   todo-cluster-control-plane   <none>           <none>
+kube-system          pod/kube-scheduler-todo-cluster-control-plane            1/1     Running   1 (12h ago)   12h   172.18.0.2   todo-cluster-control-plane   <none>           <none>
+local-path-storage   pod/local-path-provisioner-988d74bc-7t2wr                1/1     Running   0             12h   10.244.0.4   todo-cluster-control-plane   <none>           <none>
+
+NAMESPACE     NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE   SELECTOR
+default       service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  12h   <none>
+kube-system   service/kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   12h   k8s-app=kube-dns
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE   CONTAINERS    IMAGES                                          SELECTOR
+kube-system   daemonset.apps/kindnet      1         1         1       1            1           kubernetes.io/os=linux   12h   kindnet-cni   docker.io/kindest/kindnetd:v20240202-8f1494ea   app=kindnet
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   12h   kube-proxy    registry.k8s.io/kube-proxy:v1.30.0              k8s-app=kube-proxy
+
+NAMESPACE            NAME                                     READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS               IMAGES                                                        SELECTOR
+default              deployment.apps/todo-app                 1/1     1            1           12h   web                      alpine:3.19                                                   app=todo-app
+kube-system          deployment.apps/coredns                  2/2     2            2           12h   coredns                  registry.k8s.io/coredns/coredns:v1.11.1                       k8s-app=kube-dns
+local-path-storage   deployment.apps/local-path-provisioner   1/1     1            1           12h   local-path-provisioner   docker.io/kindest/local-path-provisioner:v20240202-8f1494ea   app=local-path-provisioner
+
+NAMESPACE            NAME                                              DESIRED   CURRENT   READY   AGE   CONTAINERS               IMAGES                                                        SELECTOR
+default              replicaset.apps/todo-app-668bf8d554               1         1         1       12h   web                      alpine:3.19                                                   app=todo-app,pod-template-hash=668bf8d554
+kube-system          replicaset.apps/coredns-7db6d8ff4d                2         2         2       12h   coredns                  registry.k8s.io/coredns/coredns:v1.11.1                       k8s-app=kube-dns,pod-template-hash=7db6d8ff4d
+local-path-storage   replicaset.apps/local-path-provisioner-988d74bc   1         1         1       12h   local-path-provisioner   docker.io/kindest/local-path-provisioner:v20240202-8f1494ea   app=local-path-provisioner,pod-template-hash=988d74bc
+
+NAMESPACE            NAME                                                             DATA   AGE
+default              configmap/kube-root-ca.crt                                       1      12h
+kube-node-lease      configmap/kube-root-ca.crt                                       1      12h
+kube-public          configmap/cluster-info                                           2      12h
+kube-public          configmap/kube-root-ca.crt                                       1      12h
+kube-system          configmap/coredns                                                1      12h
+kube-system          configmap/extension-apiserver-authentication                     6      12h
+kube-system          configmap/kube-apiserver-legacy-service-account-token-tracking   1      12h
+kube-system          configmap/kube-proxy                                             2      12h
+kube-system          configmap/kube-root-ca.crt                                       1      12h
+kube-system          configmap/kubeadm-config                                         1      12h
+kube-system          configmap/kubelet-config                                         1      12h
+local-path-storage   configmap/kube-root-ca.crt                                       1      12h
+local-path-storage   configmap/local-path-config                                      4      12h
+
+NAMESPACE     NAME                            TYPE                            DATA   AGE
+kube-system   secret/bootstrap-token-abcdef   bootstrap.kubernetes.io/token   6      12h
