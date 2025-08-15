@@ -1,0 +1,72 @@
+namespace: "todoapp"
+serviceAccountName: "todoapp-sa"
+
+image:
+  repository: "python"
+  tag: "3.12-slim"
+  pullPolicy: IfNotPresent
+
+# Секрети: будуть згенеровані через range і примаплені в Deployment як env
+secrets:
+  DJANGO_SECRET_KEY: "supersecret"
+  DJANGO_DEBUG: "false"
+  DB_NAME: "todo"
+  DB_USER: "todo_user"
+  DB_PASSWORD: "todo_pass"
+  DB_HOST: "mysql"   # сервіс із підчарту mysql
+  DB_PORT: "3306"
+
+# К-сть реплік застосунку (HPA може масштабувати в межах min/max)
+replicas: 2
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# Параметри RollingUpdate
+rollingUpdate:
+  maxUnavailable: "25%"
+  maxSurge: "25%"
+
+# Node Affinity керується тут (ключ + значення).
+# Якщо values порожній, affinity не рендериться.
+nodeAffinity:
+  key: "kubernetes.io/hostname"
+  values: []   # приклад: ["todo-kind-worker"]
+
+# HPA параметри
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 3
+  averageUtilization:
+    cpu: 60
+    memory: 70
+
+service:
+  type: ClusterIP
+  port: 8000
+
+# Ingress (є в шаблонах)
+ingress:
+  enabled: true
+  host: "todoapp.local"
+  path: "/"
+  servicePort: 8000
+
+# PV/PVC — ДОДАНО: керування обсягами з values.yaml (вимога ТЗ)
+pv:
+  capacity: "1Gi"
+  hostPath: "/var/local-path-provisioner/todoapp-pv"  # для kind/локально
+
+pvc:
+  requestsStorage: "1Gi"
+
+# Значення для підчарту mysql можна перекривати звідси (за потреби)
+mysql:
+  namespace: "mysql"
+  replicas: 2

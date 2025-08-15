@@ -1,20 +1,45 @@
-#!/bin/bash
-kubectl apply -f .infrastructure/mysql/ns.yml
-kubectl apply -f .infrastructure/mysql/configMap.yml
-kubectl apply -f .infrastructure/mysql/secret.yml
-kubectl apply -f .infrastructure/mysql/service.yml
-kubectl apply -f .infrastructure/mysql/statefulSet.yml
+#!/usr/bin/env bash
+set -euo pipefail
 
-kubectl apply -f .infrastructure/app/ns.yml
-kubectl apply -f .infrastructure/app/pv.yml
-kubectl apply -f .infrastructure/app/pvc.yml
-kubectl apply -f .infrastructure/app/secret.yml
-kubectl apply -f .infrastructure/app/configMap.yml
-kubectl apply -f .infrastructure/app/clusterIp.yml
-kubectl apply -f .infrastructure/app/nodeport.yml
-kubectl apply -f .infrastructure/app/hpa.yml
-kubectl apply -f .infrastructure/app/deployment.yml
+CLUSTER_NAME="todo-kind"
+CHART_DIR="src/todolist"
+NAMESPACE="todo"
+RELEASE_NAME="todolist"
 
-# Install Ingress Controller
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-# kubectl apply -f .infrastructure/ingress/ingress.yml
+echo ">>> 1) Create kind cluster"
+if ! kind get clusters | grep -q "^${CLUSTER_NAME}$"; then
+  kind create cluster --name "${CLUSTER_NAME}" --config cluster.yml
+else
+  echo "Kind cluster ${CLUSTER_NAME} already exists, skipping..."
+fi
+
+echo ">>> 2) Ensure kubectl context"
+kubectl cluster-info
+
+echo ">>> 3) Inspect nodes for labels/taints"
+kubectl get nodes --show-labels
+
+echo ">>> 4) Taint nodes labeled app=mysql with app=mysql:NoSchedule"
+MYSQL_NODES=$(kubectl get nodes -l app=mysql -o name || true)
+if [ -n "${MYSQL_NODES}" ]; then
+  for n in ${MYSQL_NODES}; do
+    kubectl taint "${n}" app=mysql:NoSchedule --overwrite || true
+  done
+else
+  echo "No nodes labeled app=mysql found."
+fi
+
+echo ">>> 5) Helm dependency update"
+helm dependency update "${CHART_DIR}"
+
+echo ">>> 6) Install/upgrade Helm release"
+helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
+  --namespace "${NAMESPACE}" \
+  --create-namespace
+
+echo ">>> 7) Wait for deployment"
+kubectl -n "${NAMESPACE}" rollout status deploy/${RELEASE_NAME}-deployment --timeout=120s || true
+
+echo ">>> 8) Collect output"
+kubectl get all,cm,secret,ing -A -o wide > output.log
+echo "Done."

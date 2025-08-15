@@ -1,0 +1,39 @@
+namespace: "mysql"
+
+serviceAccountName: "mysql-sa"
+
+image:
+  repository: "mysql"
+  tag: "8.0"
+
+secrets:
+  MYSQL_DATABASE: "todo"
+  MYSQL_USER: "todo_user"
+  MYSQL_PASSWORD: "todo_pass"
+  MYSQL_ROOT_PASSWORD: "root_pass"
+
+replicas: 2
+
+pvc:
+  requestsStorage: "2Gi"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
+
+affinity:
+  nodeAffinity:
+    required:
+      key: "app"
+      operator: "In"
+      values: ["mysql"]
+
+tolerations:
+  - key: "app"
+    operator: "Equal"
+    value: "mysql"
+    effect: "NoSchedule"

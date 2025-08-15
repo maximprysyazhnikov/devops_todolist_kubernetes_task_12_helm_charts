@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ printf "%s" .Chart.Name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceName: {{ printf "%s" .Chart.Name }}
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      serviceAccountName: {{ printf "%s-%s" .Chart.Name .Values.serviceAccountName }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: {{ .Values.affinity.nodeAffinity.required.key | default "app" }}
+                    operator: {{ .Values.affinity.nodeAffinity.required.operator | default "In" }}
+                    values:
+{{- range .Values.affinity.nodeAffinity.required.values }}
+                      - "{{ . }}"
+{{- end }}
+      tolerations:
+{{- range .Values.tolerations }}
+        - key: "{{ .key }}"
+          operator: "{{ .operator }}"
+          value: "{{ .value }}"
+          effect: "{{ .effect }}"
+{{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_DATABASE } }
+            - name: MYSQL_USER
+              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_USER } }
+            - name: MYSQL_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_PASSWORD } }
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_ROOT_PASSWORD } }
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.pvc.requestsStorage }}
