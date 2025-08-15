@@ -39,17 +39,13 @@ spec:
           ports:
             - containerPort: 3306
           env:
-            - name: MYSQL_DATABASE
-              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_DATABASE } }
-            - name: MYSQL_USER
-              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_USER } }
-            - name: MYSQL_PASSWORD
-              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_PASSWORD } }
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom: { secretKeyRef: { name: {{ printf "%s-secrets" .Chart.Name }}, key: MYSQL_ROOT_PASSWORD } }
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/mysql
+{{- range $k, $_ := .Values.secrets }}
+            - name: "{{ $k }}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-secrets" $.Chart.Name }}
+                  key: "{{ $k }}"
+{{- end }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu | quote }}
@@ -57,6 +53,9 @@ spec:
             limits:
               cpu: {{ .Values.resources.limits.cpu | quote }}
               memory: {{ .Values.resources.limits.memory | quote }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
   volumeClaimTemplates:
     - metadata:
         name: data

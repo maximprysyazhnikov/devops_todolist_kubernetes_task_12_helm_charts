@@ -2,9 +2,9 @@
 set -euo pipefail
 
 CLUSTER_NAME="todo-kind"
-CHART_DIR="src/todolist"
-NAMESPACE="todo"
-RELEASE_NAME="todolist"
+CHART_DIR=".infrastructure/helm-chart/todoapp"
+NAMESPACE="todoapp"
+RELEASE_NAME="todoapp"
 
 echo ">>> 1) Create kind cluster"
 if ! kind get clusters | grep -q "^${CLUSTER_NAME}$"; then
@@ -38,8 +38,8 @@ helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --create-namespace
 
 echo ">>> 7) Wait for deployment"
-kubectl -n "${NAMESPACE}" rollout status deploy/${RELEASE_NAME}-deployment --timeout=120s || true
+kubectl -n "${NAMESPACE}" rollout status deploy/${RELEASE_NAME}-deployment --timeout=180s || true
 
 echo ">>> 8) Collect output"
-kubectl get all,cm,secret,ing -A -o wide > output.log
+kubectl get all,cm,secret,ing -A -o wide | tee output.log
 echo "Done."
